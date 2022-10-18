@@ -8,7 +8,6 @@ BOOT_LOGO="desktop"
 BOOT_FDT_FILE="rockchip/rk3588-h88k.dtb"
 BOOT_SCENARIO="spl-blobs"
 WIREGUARD="no"
-BOOT_SUPPORT_SPI="yes"
 IMAGE_PARTITION_TABLE="gpt"
 SKIP_BOOTSPLASH="yes" # Skip boot splash patch, conflicts with CONFIG_VT=yes
 BOOTFS_TYPE="ext4"
