@@ -42,7 +42,6 @@
 		io-channel-names = "adc-detect";
 		keyup-threshold-microvolt = <1800000>;
 		poll-interval = <100>;
-		spk-con-gpio = <&gpio4 RK_PA2 GPIO_ACTIVE_HIGH>;
 		hp-con-gpio = <&gpio4 RK_PA7 GPIO_ACTIVE_HIGH>;
 		rockchip,format = "i2s";
 		rockchip,mclk-fs = <256>;
@@ -206,15 +205,6 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&mipidcphy0_pwr>;
 		regulator-name = "vcc_mipidcphy0";
-		enable-active-high;
-	};
-
-	vcc_3v3_sd_s0: vcc-3v3-sd-s0-regulator {
-		compatible = "regulator-fixed";
-		gpio = <&gpio0 RK_PB7 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&sd_s0_pwr>;
-		regulator-name = "vcc_3v3_sd_s0";
 		enable-active-high;
 	};
 };
@@ -519,12 +509,6 @@
 		};
 	};
 
-	sdmmc {
-		sd_s0_pwr: sd-s0-pwr {
-			rockchip,pins = <0 RK_PB7 RK_FUNC_GPIO &pcfg_pull_up>;
-		};
-	};
-
 	usb {
 		vcc5v0_host_en: vcc5v0-host-en {
 			rockchip,pins = <4 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
@@ -555,20 +539,11 @@
 	status = "okay";
 };
 
-&sdhci {
-	bus-width = <8>;
-	no-sdio;
-	no-sd;
-	non-removable;
-	max-frequency = <200000000>;
-	mmc-hs400-1_8v;
-	mmc-hs400-enhanced-strobe;
-	status = "okay";
-};
-
 &sdmmc {
 	status = "okay";
-	vmmc-supply = <&vcc_3v3_sd_s0>;
+	/delete-property/ sd-uhs-sdr104;
+	max-frequency = <500000000>;
+	vmmc-supply = <&vcc_3v3_s3>;
 };
 
 &uart9 {
@@ -630,4 +605,8 @@
 	dr_mode = "host";
 	maximum-speed = "high-speed";
 	status = "okay";
+};
+
+&vccio_sd_s0 {
+	regulator-ramp-delay = <12500>;
 };

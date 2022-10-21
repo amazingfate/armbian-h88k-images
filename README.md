@@ -6,6 +6,7 @@ This is now a community supported build. The device tree is not in [armbian's re
 Current device tree support status:
  - [x] 2.5G ethernet
  - [x] M.2 E key
+ - [x] TF Card
  - [ ] M.2 M key
  - [ ] PCIE3X4
 
