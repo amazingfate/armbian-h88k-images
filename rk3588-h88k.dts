@@ -6,15 +6,26 @@
 
 /dts-v1/;
 
-#include "dt-bindings/usb/pd.h"
+#include <dt-bindings/leds/common.h>
 #include "rk3588.dtsi"
 #include "rk3588-evb.dtsi"
 #include "rk3588-rk806-single.dtsi"
 #include "rk3588-linux.dtsi"
 
 / {
-	model = "Rockchip RK3588 OWL H88K V1 Board";
+	model = "HINLINK OWL H88K V1 Board";
 	compatible = "rockchip,rk3588-owl-h88k-v1", "rockchip,rk3588";
+
+	aliases {
+		ethernet0 = &gmac0;
+		mmc0 = &sdmmc;
+		mmc1 = &sdhci;
+
+		led-boot = &led_intelligent;
+		led-failsafe = &led_net;
+		led-running = &led_work;
+		led-upgrade = &led_hdd;
+	};
 
 	/delete-node/ chosen;
 	/* If hdmirx node is disabled, delete the reserved-memory node here. */
@@ -32,7 +43,6 @@
 		};
 	};
 
-	
 	es8388_sound: es8388-sound {
 		status = "okay";
 		compatible = "rockchip,multicodecs-card";
@@ -95,6 +105,44 @@
 		};
 	};
 
+	leds {
+		compatible = "gpio-leds";
+                pinctrl-names = "default";
+                pinctrl-0 = <&led_intelligent_pin>, <&led_hdd_pin>, <&led_net_pin>, <&led_work_pin>;
+
+		led_intelligent: led-intelligent {
+			gpios = <&gpio0 RK_PA0 GPIO_ACTIVE_HIGH>;
+			label = "red:intelligent";
+			function = LED_FUNCTION_HEARTBEAT;
+			color = <LED_COLOR_ID_RED>;
+			//linux,default-trigger = "heartbeat";
+		};
+
+		led_hdd: led-hdd {
+			gpios = <&gpio2 RK_PC3 GPIO_ACTIVE_HIGH>;
+			label = "blue:hdd";
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_BLUE>;
+			//linux,default-trigger = "default-on";
+		};
+
+		led_net: led-net {
+			gpios = <&gpio2 RK_PC5 GPIO_ACTIVE_HIGH>;
+			label = "amber:net";
+			function = LED_FUNCTION_WAN;
+			color = <LED_COLOR_ID_AMBER>;
+			//linux,default-trigger = "default-on";
+		};
+
+		led_work: led-work {
+			gpios = <&gpio3 RK_PB7 GPIO_ACTIVE_HIGH>;
+			label = "green:work";
+			function = LED_FUNCTION_POWER;
+			color = <LED_COLOR_ID_GREEN>;
+			//linux,default-trigger = "default-on";
+		};
+	};
+
 	pcie20_avdd0v85: pcie20-avdd0v85 {
 		compatible = "regulator-fixed";
 		regulator-name = "pcie20_avdd0v85";
@@ -135,8 +183,6 @@
 		vin-supply = <&avcc_1v8_s0>;
 	};
 
-
-
 	rk_headset: rk-headset {
 		status = "disabled";
 		compatible = "rockchip_headset";
@@ -156,15 +202,37 @@
 		vin-supply = <&vcc5v0_sys>;
 	};
 
+	vcc12v_pcie30: vcc12v-pcie30 {
+		compatible = "regulator-fixed";
+
+		regulator-name = "vcc12v_pcie30";
+		regulator-min-microvolt = <12000000>;
+		regulator-max-microvolt = <12000000>;
+		regulator-always-on;
+		regulator-boot-on;
+
+		enable-active-high;
+		gpios = <&gpio3 RK_PD5 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&vcc12v_pcie30_en>;
+
+		vin-supply = <&vcc12v_dcin>;
+	};
+
 	vcc3v3_pcie30: vcc3v3-pcie30 {
 		compatible = "regulator-fixed";
+
 		regulator-name = "vcc3v3_pcie30";
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
-		enable-active-high;
-		gpios = <&gpio2 RK_PC5 GPIO_ACTIVE_HIGH>;
-		startup-delay-us = <5000>;
-		vin-supply = <&vcc12v_dcin>;
+		regulator-always-on;
+		regulator-boot-on;
+
+		/* The real source is vcc5v_sys,
+		 * but since gpio is shared with vcc12v_pice30,
+		 * so change it as follows
+		 */
+		vin-supply = <&vcc12v_pcie30>;
 	};
 
 	vcc5v0_host: vcc5v0-host {
@@ -180,35 +248,11 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&vcc5v0_host_en>;
 	};
-
-	vcc_mipicsi0: vcc-mipicsi0-regulator {
-		compatible = "regulator-fixed";
-		gpio = <&gpio1 RK_PD2 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&mipicsi0_pwr>;
-		regulator-name = "vcc_mipicsi0";
-		enable-active-high;
-	};
-
-	vcc_mipicsi1: vcc-mipicsi1-regulator {
-		compatible = "regulator-fixed";
-		gpio = <&gpio1 RK_PD3 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&mipicsi1_pwr>;
-		regulator-name = "vcc_mipicsi1";
-		enable-active-high;
-	};
-
-	vcc_mipidcphy0: vcc-mipidcphy0-regulator {
-		compatible = "regulator-fixed";
-		gpio = <&gpio2 RK_PC4 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&mipidcphy0_pwr>;
-		regulator-name = "vcc_mipidcphy0";
-		enable-active-high;
-	};
 };
 
+&backlight {
+	status = "disabled";
+};
 
 &combphy0_ps {
 	status = "okay";
@@ -222,21 +266,21 @@
 	status = "okay";
 };
 
+&dfi {
+	status = "okay";
+};
+
+&dmc {
+	center-supply = <&vdd_ddr_s0>;
+	mem-supply = <&vdd_log_s0>;
+	status = "okay";
+};
+
 &dp0 {
 	status = "okay";
 };
 
 &dp0_in_vp2 {
-	status = "okay";
-};
-
-&dp1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&dp1m0_pins>;
-	status = "okay";
-};
-
-&dp1_in_vp2 {
 	status = "okay";
 };
 
@@ -355,10 +399,10 @@
 	};
 };
 
-&i2c1 {
+&i2c2 {
 	status = "okay";
 	pinctrl-names = "default";
-	pinctrl-0 = <&i2c1m2_xfer>;
+	pinctrl-0 = <&i2c2m0_xfer>;
 
 	vdd_npu_s0: vdd_npu_mem_s0: rk8602@42 {
 		compatible = "rockchip,rk8602";
@@ -381,8 +425,6 @@
 &i2c4 {
 	status = "okay";
 	pinctrl-0 = <&i2c4m1_xfer>;
-
-
 };
 
 &i2c5 {
@@ -437,30 +479,32 @@
 &mdio0 {
 	rgmii_phy0: phy@1 {
 		compatible = "ethernet-phy-ieee802.3-c22";
+		phy-supply = <&vcc_3v3_s3>;
 		reg = <0x1>;
 	};
 };
 
+/* M.2 A+E */
 &pcie2x1l0 {
 	reset-gpios = <&gpio0 RK_PB0 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 };
 
+/* RTL8125 */
 &pcie2x1l1 {
 	reset-gpios = <&gpio4 RK_PA2 GPIO_ACTIVE_HIGH>;		//GPIO4_A2_d PCIEX1_1_PERSTn_M1_L
 	pinctrl-names = "default";
-	pinctrl-0 = <&rtl8111_isolate>;
+	pinctrl-0 = <&rtl8125_isolate>;
 	status = "okay";
 };
 
 &pcie30phy {
-	rockchip,pcie30-phymode = <PHY_MODE_PCIE_AGGREGATION>;
-	status = "okay";
+	//rockchip,pcie30-phymode = <PHY_MODE_PCIE_AGGREGATION>;
+	status = "disabled";
 };
 
 &pcie3x4 {
 	reset-gpios = <&gpio4 RK_PB6 GPIO_ACTIVE_HIGH>;
-	vpcie3v3-supply = <&vcc3v3_pcie30>;
 	status = "disabled";
 };
 
@@ -479,11 +523,24 @@
 		mipidcphy0_pwr: mipidcphy0-pwr {
 			rockchip,pins =
 				/* camera power en */
-				<2 RK_PC4 RK_FUNC_GPIO &pcfg_pull_none>;
+				<1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		mipidcphy1_pwr: mipidcphy1-pwr {
+			rockchip,pins =
+				/* camera power en */
+				<1 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		mipidphy0_pwr: mipidphy0-pwr {
+			rockchip,pins =
+				/* camera power en */
+				<1 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		mipidphy1_pwr: mipidphy1-pwr {
+			rockchip,pins =
+				/* camera power en */
+				<1 RK_PB4 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
-
-
 
 	hdmi {
 		hdmirx_det: hdmirx-det {
@@ -503,9 +560,33 @@
 		};
 	};
 
-	rtl8111 {
-		rtl8111_isolate: rtl8111-isolate {
-			rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;	//GPIO1_A4_d RTL8111HS_ISOLATEB_L
+	led {
+		led_intelligent_pin: led-intelligent-pin {
+			rockchip,pins = <0 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led_hdd_pin: led-hdd-pin {
+			rockchip,pins = <2 RK_PC3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led_net_pin: led-net-pin {
+			rockchip,pins = <2 RK_PC5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		led_work_pin: led-work-pin {
+			rockchip,pins = <3 RK_PB7 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	pcie {
+		vcc12v_pcie30_en: vcc12v-pcie30-en {
+			rockchip,pins = <3 RK_PD5 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	rtl8125 {
+		rtl8125_isolate: rtl8125-isolate {
+			rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;	//GPIO1_A4_d RTL8125B_ISOLATEB_L
 		};
 	};
 
@@ -514,8 +595,6 @@
 			rockchip,pins = <4 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
-
-
 };
 
 &pwm1 {
@@ -544,12 +623,6 @@
 	/delete-property/ sd-uhs-sdr104;
 	max-frequency = <500000000>;
 	vmmc-supply = <&vcc_3v3_s3>;
-};
-
-&uart9 {
-	status = "okay";
-	pinctrl-names = "default";
-	pinctrl-0 = <&uart9m0_xfer &uart9m0_ctsn>;
 };
 
 &u2phy0_otg {
