@@ -19,13 +19,8 @@
 #include "rk3588-rk806-single.dtsi"
 
 / {
-	model = "HINLINK OWL H88K Board";
-	compatible = "hinlink,owl-h88k", "rockchip,rk3588";
-
-	aliases {
-		mmc0 = &sdmmc;
-		mmc1 = &sdhci;
-	};
+	model = "HINLINK H88K";
+	compatible = "hinlink,h88k", "rockchip,rk3588";
 
 	chosen {
 		stdout-path = "serial2:1500000n8";
