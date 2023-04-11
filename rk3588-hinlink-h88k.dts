@@ -26,6 +26,15 @@
 		stdout-path = "serial2:1500000n8";
 	};
 
+	dp0_sound: dp0-sound {
+		compatible = "rockchip,hdmi";
+		rockchip,card-name= "rockchip,dp0";
+		rockchip,mclk-fs = <512>;
+		rockchip,cpu = <&spdif_tx2>;
+		rockchip,codec = <&dp0 1>;
+		rockchip,jack-det;
+	};
+
 	es8388-sound {
 		compatible = "rockchip,multicodecs-card";
 		rockchip,card-name = "rockchip-es8388";
@@ -612,7 +621,7 @@
 	status = "okay";
 
 	es8388: es8388@11 {
-		compatible = "everest,es8388";
+		compatible = "everest,es8388", "everest,es8323";
 		reg = <0x11>;
 		assigned-clocks = <&cru I2S0_8CH_MCLKOUT>;
 		assigned-clock-rates = <12288000>;
@@ -902,6 +911,11 @@
 	status = "okay";
 };
 
+&saradc {
+	status = "okay";
+	vref-supply = <&vcc_1v8_s0>;
+};
+
 &sata0 {
 	status = "okay";
 };
@@ -927,6 +941,10 @@
 	max-frequency = <50000000>;
 	vmmc-supply = <&vcc_3v3_s3>;
 	vqmmc-supply = <&vccio_sd_s0>;
+	status = "okay";
+};
+
+&spdif_tx2 {
 	status = "okay";
 };
 
